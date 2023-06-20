@@ -1,7 +1,7 @@
 const supportLanguages = require('./support_languages');
-const utils = require('./utils');
+const parseMangaDexApi = require('./parse_api');
 
-const baseURL = 'https://api.mangadex.org/manga?availableTranslatedLanguage%5B%5D={0}&title={1}&includes%5B%5D=cover_art&offset={2}';
+const baseURL = 'https://api.mangadex.org/manga?includes[]=cover_art&availableTranslatedLanguage[]={0}&title={1}&offset={2}';
 
 class SearchController extends Controller {
 
@@ -37,7 +37,7 @@ class SearchController extends Controller {
     }
 
     makeURL(searchQuery, resultOffset) {
-        return baseURL.replace('{0}', this.getLanguage()).replace('{1}', encodeURIComponent(searchQuery).replace('{2}', resultOffset));
+        return baseURL.replace('{0}', this.getLanguage()).replace('{1}', encodeURIComponent(searchQuery)).replace('{2}', resultOffset);
     }
 
     onSearchClicked() {
@@ -164,13 +164,14 @@ class SearchController extends Controller {
                 'Accept-Language': 'en-US,en;q=0.9',
             }
         });
-        let apiResponse = await res.JSON();
-        
+
+        let apiResponse = await res.json();
+
         return this.parseData(apiResponse);
     }
 
     parseData(apiJSON) {
-        return utils.parseMangaDexApi(apiJSON, this.getLanguage());
+        return parseMangaDexApi(apiJSON, this.getLanguage());
     }
 }
 

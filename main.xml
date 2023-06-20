@@ -17,7 +17,7 @@
                     <list-item dense="true" color="color(canvas)">
                         <if candidate="isNotNull(${item.picture})">
                             <attr:leading>
-                                <img src="${item.picture}" headers="${item.pictureHeaders}" width="48" height="48" fit="cover"/>
+                                <img src="${item.picture}" width="48" height="48" fit="cover"/>
                             </attr:leading>
                         </if>
                         <attr:title>
@@ -31,7 +31,7 @@
                             <callback function="onPressed" args="array(${args[1]})"/>
                         </attr:onTap>
                         <attr:leading>
-                            <img src="${item.picture}" headers="${item.pictureHeaders}" width="48" height="48" fit="cover"/>
+                            <img src="${item.picture}" width="48" height="48" fit="cover"/>
                         </attr:leading>
                         <attr:title>
                             <text>${item.title}</text>

@@ -10,7 +10,7 @@ class IndexController extends Controller {
                 {
                     "title": "Recently Added",
                     "id": "recently_added",
-                    "url": "https://api.mangadex.org/manga?limit=15&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica&order[createdAt]=desc&includes[]=cover_art&availableTranslatedLanguage[]={0}&offset={1}"
+                    "url": "https://api.mangadex.org/manga?includes[]=cover_art&limit=15&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica&order[createdAt]=desc&availableTranslatedLanguage[]={0}&offset={1}"
                 }, 
             ]
         };

@@ -1,5 +1,5 @@
 const supportLanguages = require('./support_languages');
-const utils = require('./utils');
+const parseMangaDexApi = require('./parse_api');
 
 class MainController extends Controller {
 
@@ -19,7 +19,7 @@ class MainController extends Controller {
         this.data = {
             list: list,
             loading: false,
-            hasMore: this.id === 'home'
+            hasMore: this.id === 'recently_added'
         };
 
         this.userAgent = "Kinoko (MangadexPlugin/v0.0.1)";
@@ -58,8 +58,7 @@ class MainController extends Controller {
             this.data.loading = true;
         });
         try {
-
-            let pageNumber = this.pageNumber + 1;
+            let pageNumber = this.page + 1;
             let url = this.makeURL(pageNumber);
             let res = await fetch(url, {
                 headers: {
@@ -67,9 +66,9 @@ class MainController extends Controller {
                     'Accept-Language': 'en-US,en;q=0.9',
                 }
             });
-            let text = await res.text();
-            this.pageNumber = pageNumber;
-            let items = this.parseData(text, url);
+            let text = await res.json();
+            this.page = pageNumber;
+            let items = this.parseData(text);
     
             this.setState(()=>{
                 for (let item of items) {
@@ -107,6 +106,7 @@ class MainController extends Controller {
     getDateMinusMonth() {
         const dateNow = new Date();
         dateNow.setDate(dateNow.getDate() - 30)
+
         return dateNow.toISOString().split('.')[0];
     }
 
@@ -122,8 +122,8 @@ class MainController extends Controller {
                     'Accept-Language': 'en-US,en;q=0.9',
                 }
             });
-            let text = await res.json();
-            let items = this.parseData(text);
+            let newPageJSON = await res.json();
+            let items = this.parseData(newPageJSON);
             this.page = 0;
             localStorage['cache_' + this.id] = JSON.stringify({
                 time: new Date().getTime(),
@@ -152,6 +152,7 @@ class MainController extends Controller {
 
     parseData(apiJSON) {
         let results = [];
+        
 
         // Add a pretty header to the homepage.
         // TODO: Make localized.
@@ -163,7 +164,8 @@ class MainController extends Controller {
         }
 
         // Normalize the data returned by the MangaDex API.
-        results.push(utils.parseMangaDexApi(apiJSON, this.getLanguage()));
+        let mangadexApi = parseMangaDexApi(apiJSON, this.getLanguage())
+        results = results.concat(mangadexApi);
 
         return results;
     }

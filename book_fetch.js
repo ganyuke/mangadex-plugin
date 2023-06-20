@@ -1,3 +1,5 @@
+const supportLanguages = require('./support_languages');
+
 function getLanguage() {
     let lan = localStorage['cached_language'];
     if (lan) return lan;
@@ -10,10 +12,7 @@ function getLanguage() {
     return 'en';
 }
 
-function parseData(language, rawMangaResponse, rawChapterResponse) {
-    let mangaJSON = JSON.parse(rawMangaResponse);
-    let chapterJSON = JSON.parse(rawChapterResponse);
-
+function parseData(language, mangaJSON, chapterJSON) {
     // Stop parsing JSON if MangaDex's API returns an error.
     if (mangaJSON['result'] === 'error') {
         showToast(`MangaDex API returned error:` + json['errors'][0]['title']);
@@ -25,15 +24,16 @@ function parseData(language, rawMangaResponse, rawChapterResponse) {
     }
 
     let title = mangaJSON['data']['attributes']['title'][language]
-    let subtitle;
-    let summary;
+    let subtitle = null;
+    let summary = null;;
+    let book = mangaJSON['data'];
 
-    for (let relation of book['relationships']) {
-        if (relation.type === "cover_art") {
-            item.picture = `https://uploads.mangadex.org/covers/${book['id']}/${relation['attributes']['fileName']}`;
-            break;
-        }
-    };
+    // for (let relation of book['relationships']) {
+    //     if (relation.type === "cover_art") {
+    //         item.picture = `https://uploads.mangadex.org/covers/${book['id']}/${relation['attributes']['fileName']}`;
+    //         break;
+    //     }
+    // };
     for (let altTitle of book['attributes']['altTitles']) {
         if (language in altTitle) {
             subtitle = altTitle[language];
@@ -49,13 +49,17 @@ function parseData(language, rawMangaResponse, rawChapterResponse) {
     let list = [];
     let chapters = chapterJSON['data'];
     for (let chapter of chapters) {
-        let formattedTitle = chapter['attributes']['title'] !== "" ? chapter['attributes']['title'] : `Vol. ${chapter['attributes']['volume']} Ch. ${chapter['attributes']['chapter']}`
+        let volumeNum = chapter['attributes']['volume']
+        let chapterNum = chapter['attributes']['chapter']
+        let chapterTitle = chapter['attributes']['title']
+        let formattedTitle = (volumeNum ? "Vol. " + volumeNum : "") + (chapterNum ? " Ch. " + chapterNum : "") + (chapterTitle ? " - " + chapterTitle : "")
         list.push({
             title: formattedTitle,
             subtitle: null,
             link: `https://api.mangadex.org/at-home/server/${chapter['id']}`,
         });
     }
+
     return {
         title: title,
         subtitle: subtitle,
@@ -65,15 +69,18 @@ function parseData(language, rawMangaResponse, rawChapterResponse) {
 }
 
 module.exports = async function (url) {
+    let language = getLanguage()
+
     const headers = {
         'User-Agent': 'Kinoko (MangadexPlugin/v0.0.1)',
         'Accept-Language': 'en-US,en;q=0.9',
     }
-    let mangaResponse = await fetch(url, {headers: headers});
-    let chapterResponse = await fetch(url + "/feed", {headers: headers});
+    
+    let rawMangaResponse = await fetch(url, { headers: headers });
+    let mangaResponse = await rawMangaResponse.json();
 
-    let rawMangaResponse = await mangaResponse.json();
-    let rawChapterResponse = await chapterResponse.json();
+    let rawChapterResponse = await fetch(url + "/feed?order[createdAt]=asc&order[volume]=asc&order[chapter]=asc&translatedLanguage[]=" + language, { headers: headers });
+    let chapterResponse = await rawChapterResponse.json();
 
-    return parseData(getLanguage(), rawMangaResponse, rawChapterResponse);
+    return parseData(language, mangaResponse, chapterResponse);
 }

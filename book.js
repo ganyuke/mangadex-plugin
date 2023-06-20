@@ -47,7 +47,7 @@ class BookController extends Controller {
          * 
          * Same as addFavorite with out lastData.
          */
-        this.addHistory(this.bookInfo);
+        //this.addHistory(this.bookInfo);
         
         let cached = localStorage[`book:${this.url}`];
         if (cached) {
@@ -64,7 +64,7 @@ class BookController extends Controller {
         } else {
             this.reload();
         }
-        FavoritesManager.clearNew(this.url);
+        //FavoritesManager.clearNew(this.url);
         this.data.last = this.getLast();
     }
 
@@ -106,7 +106,7 @@ class BookController extends Controller {
     onFavoritePressed() {
         this.setState(()=>{
             if (this.isFavarite()) {
-                FavoritesManager.remove(this.url);
+                //FavoritesManager.remove(this.url);
             } else {
                 let last;
     
@@ -243,7 +243,7 @@ class BookController extends Controller {
     }
 
     isFavarite() {
-        return FavoritesManager.exist(this.url);
+        //return FavoritesManager.exist(this.url);
     }
 
     getLast() {

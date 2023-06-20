@@ -1,15 +1,17 @@
 // Shared function to normalize the data from MangaDex's `/manga` API endpoint.
 function parseMangaDexApi(apiJSON, language) {
-    let json = JSON.parse(apiJSON);
-    let results = [];
-
     // Stop parsing JSON if MangaDex's API returns an error.
-    if (json['result'] === 'error') {
-        showToast(`MangaDex API returned error:` + json['errors'][0]['title']);
-        return results;
+    if (apiJSON['result'] === 'error') {
+        console.log("we've enoucntered an error")
+        console.log(apiJSON['result'])
+        return;
     }
 
-    let books = json['data'];
+    let results = [];
+
+    console.log("no error in api it seems")
+
+    let books = apiJSON['data'];
     
     for (let book of books) {
         let item = {
@@ -32,7 +34,12 @@ function parseMangaDexApi(apiJSON, language) {
 
         results.push(item);
     }
+
+    console.log("THE RESUOTS ARE OUT OF THE OVEN")
+    console.log("Here you go!")
+    console.log(results)
+
     return results;
 }
 
-exports.parseMangaDexApi = parseMangaDexApi;
+module.exports = parseMangaDexApi;

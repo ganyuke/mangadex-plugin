@@ -26,16 +26,17 @@ class MangaProcesser extends Processor {
             } else {
                 // Retrieve the Manga-At-Home URLs from MangaDex
                 let mangaAtHome = await this.fetch(root_url);
+                let urls = [];
 
                 // Stop parsing JSON if MangaDex's API returns an error.
                 if (mangaAtHome['result'] === 'error') {
                     showToast(`MangaDex API returned error:` + mangaAtHome['errors'][0]['title']);
-                    return results;
+                    return;
                 }
 
                 // Construct the image URLs
                 for (let i = 0, t = mangaAtHome['chapter']['data'].length; i < t; i++) {
-                    urls.push(mangaAtHome['baseUrl'] + "/data/" + mangaAtHome['data'][i]);
+                    urls.push(mangaAtHome['baseUrl'] + "/data/" + mangaAtHome['chapter']['hash'] + "/" + mangaAtHome['chapter']['data'][i]);
                 }
 
                 state = {
@@ -81,7 +82,7 @@ class MangaProcesser extends Processor {
             }
         });
         let apiResponse = await res.json();
-        return JSON.parse(apiResponse);
+        return apiResponse;
     }
 
     // Called in `dispose`
