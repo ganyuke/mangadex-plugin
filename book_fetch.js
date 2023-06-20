@@ -1,28 +1,59 @@
+function getLanguage() {
+    let lan = localStorage['cached_language'];
+    if (lan) return lan;
 
-function parseData(text) {
-    const doc = HTMLParser.parse(text);
-    let h1 = doc.querySelector(".book-info h1");
-    let title = h1.text.trim();
-    
-    let infos = doc.querySelectorAll(".short-info p");
-    let subtitle, summary;
+    for (let name of supportLanguages) {
+        if (navigator.language.startsWith(name)) {
+            return name;
+        }
+    }
+    return 'en';
+}
 
-    if (infos.length >= 2) {
-        subtitle = infos[0].text;
+function parseData(language, rawMangaResponse, rawChapterResponse) {
+    let mangaJSON = JSON.parse(rawMangaResponse);
+    let chapterJSON = JSON.parse(rawChapterResponse);
+
+    // Stop parsing JSON if MangaDex's API returns an error.
+    if (mangaJSON['result'] === 'error') {
+        showToast(`MangaDex API returned error:` + json['errors'][0]['title']);
+        return;
     }
-    if (infos.length >= 1) {
-        summary = infos[infos.length - 1].text.trim().replace(/^Summary\:/, '').trim();
+    if (chapterJSON['result'] === 'error') {
+        showToast(`MangaDex API returned error:` + json['errors'][0]['title']);
+        return;
     }
+
+    let title = mangaJSON['data']['attributes']['title'][language]
+    let subtitle;
+    let summary;
+
+    for (let relation of book['relationships']) {
+        if (relation.type === "cover_art") {
+            item.picture = `https://uploads.mangadex.org/covers/${book['id']}/${relation['attributes']['fileName']}`;
+            break;
+        }
+    };
+    for (let altTitle of book['attributes']['altTitles']) {
+        if (language in altTitle) {
+            subtitle = altTitle[language];
+            break;
+        }
+    };
+
+    if (language in book['attributes']['description']) {
+        summary = book['attributes']['description'][language];
+    }
+
 
     let list = [];
-    let nodes = doc.querySelectorAll('.chapter-box > li');
-    for (let node of nodes) {
-        let anode = node.querySelector('div.chapter-name.long a');
-        let name = anode.text.trim();
+    let chapters = chapterJSON['data'];
+    for (let chapter of chapters) {
+        let formattedTitle = chapter['attributes']['title'] !== "" ? chapter['attributes']['title'] : `Vol. ${chapter['attributes']['volume']} Ch. ${chapter['attributes']['chapter']}`
         list.push({
-            title: name.replace(/new$/, ''),
-            subtitle: name.match(/new$/)?'new':null,
-            link: anode.getAttribute('href'),
+            title: formattedTitle,
+            subtitle: null,
+            link: `https://api.mangadex.org/at-home/server/${chapter['id']}`,
         });
     }
     return {
@@ -33,14 +64,16 @@ function parseData(text) {
     };
 }
 
-module.exports = async function(url) {
-    let res = await fetch(url, {
-        headers: {
-            'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Mobile Safari/537.36',
-            'Accept-Language': 'en-US,en;q=0.9',
-        }
-    });
-    let text = await res.text();
+module.exports = async function (url) {
+    const headers = {
+        'User-Agent': 'Kinoko (MangadexPlugin/v0.0.1)',
+        'Accept-Language': 'en-US,en;q=0.9',
+    }
+    let mangaResponse = await fetch(url, {headers: headers});
+    let chapterResponse = await fetch(url + "/feed", {headers: headers});
 
-    return parseData(text);
+    let rawMangaResponse = await mangaResponse.json();
+    let rawChapterResponse = await chapterResponse.json();
+
+    return parseData(getLanguage(), rawMangaResponse, rawChapterResponse);
 }

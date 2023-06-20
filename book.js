@@ -81,7 +81,7 @@ class BookController extends Controller {
             this.data.loading = true;
         });
         try {
-            let url = this.url + '?waring=1';
+            let url = this.url + '';
             let data = await bookFetch(url);
     
             let now = new Date().getTime();
@@ -151,9 +151,9 @@ class BookController extends Controller {
             /**
              * Add to download queue
              * 
-             * @param {String}key The unique identifier of the download item
-             * @param {String}title The name of book
-             * @param {String}subtitle The subtitle of book
+             * @param {String}key The unique identifier of the download item.
+             * @param {String}title The name of book.
+             * @param {String}subtitle The subtitle of book.
              * @param {String}link The url of book, To group items with same book link.
              * @param {String}picture The cover of book.
              * @param {Object}data Data will be sent to processor load function.

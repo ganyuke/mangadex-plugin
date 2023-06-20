@@ -1,2 +1,2 @@
-# plugin_demo
-A plug-in demo, and you can use this project as a scaffolding to start writing a new plugin.
+# MangaDex Plugin
+A plugin to search content on MangaDex on [Kinoko](https://github.com/gsioteam/kinoko).

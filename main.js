@@ -1,4 +1,5 @@
 const supportLanguages = require('./support_languages');
+const utils = require('./utils');
 
 class MainController extends Controller {
 
@@ -18,12 +19,10 @@ class MainController extends Controller {
         this.data = {
             list: list,
             loading: false,
-            hasMore: this.id === 'manga_directory'
+            hasMore: this.id === 'home'
         };
 
-        this.userAgent = this.id == 'manga_directory' ? 
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36' : 
-        'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Mobile Safari/537.36';
+        this.userAgent = "Kinoko (MangadexPlugin/v0.0.1)";
 
         if (cached) {
             let now = new Date().getTime();
@@ -60,8 +59,8 @@ class MainController extends Controller {
         });
         try {
 
-            let page = this.page + 1;
-            let url = this.makeURL(page);
+            let pageNumber = this.pageNumber + 1;
+            let url = this.makeURL(pageNumber);
             let res = await fetch(url, {
                 headers: {
                     'User-Agent': this.userAgent,
@@ -69,7 +68,7 @@ class MainController extends Controller {
                 }
             });
             let text = await res.text();
-            this.page = page;
+            this.pageNumber = pageNumber;
             let items = this.parseData(text, url);
     
             this.setState(()=>{
@@ -100,8 +99,15 @@ class MainController extends Controller {
         return 'en';
     }
 
-    makeURL(page) {
-        return this.url.replace('{0}', this.getLanguage()).replace('{1}', page + 1);
+    makeURL(pageNumber) {
+        return this.url.replace('{0}', this.getLanguage()).replace('{1}', pageNumber * 16).replace('{2}', this.getDateMinusMonth());
+    }
+
+    // Calculate today's date - 1 month to replicate MangaDex's "Popular New Titles".
+    getDateMinusMonth() {
+        const dateNow = new Date();
+        dateNow.setDate(dateNow.getDate() - 30)
+        return dateNow.toISOString().split('.')[0];
     }
 
     async reload() {
@@ -116,7 +122,7 @@ class MainController extends Controller {
                     'Accept-Language': 'en-US,en;q=0.9',
                 }
             });
-            let text = await res.text();
+            let text = await res.json();
             let items = this.parseData(text);
             this.page = 0;
             localStorage['cache_' + this.id] = JSON.stringify({
@@ -144,104 +150,24 @@ class MainController extends Controller {
         }
     }
 
-    parseData(text) {
+    parseData(apiJSON) {
+        let results = [];
+
+        // Add a pretty header to the homepage.
+        // TODO: Make localized.
         if (this.id === 'home') {
-            return this.parseHomeData(text);
-        } else if (this.id === 'manga_directory') {
-            return this.parsePageData(text);
-        } else {
-            return this.parseNoPageData(text);
-        }
-    }
-
-    parseHomeData(html) {
-        console.log(html);
-        const doc = HTMLParser.parse(html);
-
-        let tabs = doc.querySelectorAll('nav.mid-menu .change_tab');
-        let contents = doc.querySelectorAll('ul.tab_content');
-
-        let results = [];
-
-        for (let i = 0, t = tabs.length; i < t; ++i) {
-            let tab = tabs[i];
             results.push({
                 header: true,
-                title: tab.text,
+                title: "Popular New Titles",
             });
-
-            let tab_content = contents[i];
-            let books = tab_content.querySelectorAll('li a');
-            for (let link of books) {
-                results.push({
-                    title: link.getAttribute('title'),
-                    link: link.getAttribute('href'),
-                    picture: link.querySelector('img').getAttribute('src'),
-                });
-            }
         }
 
-        let box = doc.querySelector('.middle-box');
-        if (box) {
-            results.push({
-                header: true,
-                title: box.querySelector('h1').text.trim(),
-            });
-            let nodes = box.querySelectorAll('dl');
-            for (let node of nodes) {
-                let link = node.querySelector('.book-list a');
-                results.push({
-                    link: link.getAttribute('href'),
-                    title: link.querySelector('b').text,
-                    subtitle: node.querySelector('.book-list > i').text,
-                    picture: node.querySelector('dt img').getAttribute('src')
-                });
-            }
-        }
+        // Normalize the data returned by the MangaDex API.
+        results.push(utils.parseMangaDexApi(apiJSON, this.getLanguage()));
 
         return results;
     }
 
-    parsePageData(html) {
-        const doc = HTMLParser.parse(html);
-
-        let nodes = doc.querySelectorAll('.direlist .bookinfo');
-        let results = [];
-        for (let node of nodes) {
-            let link = node.querySelector('dt a');
-            results.push({
-                link: link.getAttribute('href'),
-                title: node.querySelector('.bookname').text,
-                subtitle: node.querySelector('.chaptername').text,
-                picture: link.querySelector('img').getAttribute('src')
-            });
-        }
-        return results;
-    }
-
-    parseNoPageData(html) {
-        const doc = HTMLParser.parse(html);
-
-        let nodes = doc.querySelectorAll('#list_container dl');
-        let results = [];
-        for (let node of nodes) {
-            let link = node.querySelector('.book-list a');
-            let item = {
-                link: link.getAttribute('href'),
-                title: link.querySelector('b').text,
-                picture: node.querySelector('dt img').getAttribute('src')
-            };
-            let pnodes = node.querySelectorAll('.book-list p');
-            if (pnodes.length != 0) {
-                item.subtitle = pnodes[pnodes.length - 1].text;
-            } else {
-                let subnode = node.querySelector('.book-list i');
-                if (subnode) item.subtitle = subnode.text;
-            }
-            results.push(item);
-        }
-        return results;
-    }
 }
 
 module.exports = MainController;

@@ -1,5 +1,7 @@
 const supportLanguages = require('./support_languages');
-const baseURL = 'https://{0}.ninemanga.com/search/?wd={1}';
+const utils = require('./utils');
+
+const baseURL = 'https://api.mangadex.org/manga?availableTranslatedLanguage%5B%5D={0}&title={1}&includes%5B%5D=cover_art&offset={2}';
 
 class SearchController extends Controller {
 
@@ -34,8 +36,8 @@ class SearchController extends Controller {
         return 'en';
     }
 
-    makeURL(word, page) {
-        return baseURL.replace('{0}', this.getLanguage()).replace('{1}', encodeURIComponent(word));
+    makeURL(searchQuery, resultOffset) {
+        return baseURL.replace('{0}', this.getLanguage()).replace('{1}', encodeURIComponent(searchQuery).replace('{2}', resultOffset));
     }
 
     onSearchClicked() {
@@ -138,7 +140,7 @@ class SearchController extends Controller {
             this.setState(()=>{
                 this.data.loading = true;
             });
-            let list = await this.request(this.makeURL(this.key, page));
+            let list = await this.request(this.makeURL(this.key, page * 10));
             this.page = page;
             this.setState(()=>{
                 for (let item of list) {
@@ -158,37 +160,17 @@ class SearchController extends Controller {
     async request(url) {
         let res = await fetch(url, {
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Mobile Safari/537.36',
+                'User-Agent': 'Kinoko (MangadexPlugin/v0.0.1)',
                 'Accept-Language': 'en-US,en;q=0.9',
             }
         });
-        let text = await res.text();
+        let apiResponse = await res.JSON();
         
-        return this.parseNoPageData(text);
+        return this.parseData(apiResponse);
     }
 
-    parseNoPageData(html) {
-        const doc = HTMLParser.parse(html);
-
-        let nodes = doc.querySelectorAll('#list_container dl');
-        let results = [];
-        for (let node of nodes) {
-            let link = node.querySelector('.book-list a');
-            let item = {
-                link: link.getAttribute('href'),
-                title: link.querySelector('b').text,
-                picture: node.querySelector('dt img').getAttribute('src')
-            };
-            let pnodes = node.querySelectorAll('.book-list p');
-            if (pnodes.length != 0) {
-                item.subtitle = pnodes[pnodes.length - 1].text;
-            } else {
-                let subnode = node.querySelector('.book-list i');
-                if (subnode) item.subtitle = subnode.text;
-            }
-            results.push(item);
-        }
-        return results;
+    parseData(apiJSON) {
+        return utils.parseMangaDexApi(apiJSON, this.getLanguage());
     }
 }
 

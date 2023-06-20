@@ -24,48 +24,46 @@ class MangaProcesser extends Processor {
             this.loading = true;
             if (state && state.urls) {
             } else {
-                let url = root_url.replace(/(-\d+)*\.html$/i, '-10-1.html');
-                let doc = await this.fetch(url);
+                // Retrieve the Manga-At-Home URLs from MangaDex
+                let mangaAtHome = await this.fetch(root_url);
 
-                let select = doc.querySelector('select.sl-page');
-                let options = select.querySelectorAll('option');
-                let urls = [];
-                for (let i = 0, t = options.length; i < t; i++) {
-                    urls.push(root_url.replace(/(-\d+)*\.html$/i, `-10-${i+1}.html`));
+                // Stop parsing JSON if MangaDex's API returns an error.
+                if (mangaAtHome['result'] === 'error') {
+                    showToast(`MangaDex API returned error:` + mangaAtHome['errors'][0]['title']);
+                    return results;
                 }
+
+                // Construct the image URLs
+                for (let i = 0, t = mangaAtHome['chapter']['data'].length; i < t; i++) {
+                    urls.push(mangaAtHome['baseUrl'] + "/data/" + mangaAtHome['data'][i]);
+                }
+
                 state = {
-                    offset: 0,
                     index: 0,
                     urls: urls,
                 }
             }
 
             const that = this;
-            function parseDoc(doc, root_url, offset) {
-                let imgs = doc.querySelectorAll('.pic_box > img');
+            function normalizeImages() {
+                let imgs = state.urls;
                 for (let i = 0, t = imgs.length; i < t; ++i) {
                     let img = imgs[i];
-                    let index = offset + i;
                     /**
                      * @property {String} url The picture url.
                      * @property {Object*} headers The picture headers.
                      */
                     that.setDataAt({
-                        url: img.getAttribute('src'),
-                    }, index);
+                        url: img,
+                    }, i);
                 }
-                return offset + imgs.length;
+
             }
 
-            while (state.index < state.urls.length) {
-                // Save the current state
-                this.save(false, state);
-                let url = state.urls[state.index];
-                let doc = await this.fetch(url);
-                if (this.disposed) return;
-                state.offset = parseDoc(doc, root_url, state.offset);
-                state.index++;
-            }
+            this.save(false, state);
+            if (this.disposed) return;
+            normalizeImages()
+
             this.save(true, state);
             this.loading = false;
         } catch (e) {
@@ -78,12 +76,12 @@ class MangaProcesser extends Processor {
         console.log(`request ${url}`);
         let res = await fetch(url, {
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Mobile Safari/537.36',
+                'User-Agent': 'Kinoko (MangadexPlugin/v0.0.1)',
                 'Accept-Language': 'en-US,en;q=0.9',
             }
         });
-        let text = await res.text();
-        return HTMLParser.parse(text);
+        let apiResponse = await res.json();
+        return JSON.parse(apiResponse);
     }
 
     // Called in `dispose`
@@ -93,7 +91,7 @@ class MangaProcesser extends Processor {
 
     // Check for new chapter
     async checkNew() {
-        let url = this.data.link + '?waring=1';
+        let url = this.data.link;
         let data = await bookFetch(url);
         var item = data.list[data.list.length - 1];
         /**
