@@ -21,7 +21,7 @@ function parseMangaDexApi(apiJSON, language) {
         };
         for (let relation of book['relationships']) {
             if (relation.type === "cover_art") {
-                item.picture = `https://uploads.mangadex.org/covers/${book['id']}/${relation['attributes']['fileName']}`;
+                item.picture = `https://uploads.mangadex.org/covers/${book['id']}/${relation['attributes']['fileName']}.256.jpg`;
                 break;
             }
         };

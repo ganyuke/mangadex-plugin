@@ -30,6 +30,7 @@ class BookController extends Controller {
 
     async load(data) {
         this.url = data.link;
+        this.page = 0;
         this.data = {
             title: data.title,
             subtitle: data.subtitle,
@@ -38,6 +39,7 @@ class BookController extends Controller {
             loading: false,
             editing: false,
             reverse: localStorage['reverse'] != 'false',
+            hasMore: false,
             list: []
         };
         this.selected = [];
@@ -64,7 +66,7 @@ class BookController extends Controller {
         } else {
             this.reload();
         }
-        //FavoritesManager.clearNew(this.url);
+        FavoritesManager.clearNew(this.url);
         this.data.last = this.getLast();
     }
 
@@ -81,8 +83,9 @@ class BookController extends Controller {
             this.data.loading = true;
         });
         try {
-            let url = this.url + '';
-            let data = await bookFetch(url);
+            this.page = 0;
+
+            let data = await bookFetch(this.url);
     
             let now = new Date().getTime();
             data.time = now;
@@ -103,10 +106,36 @@ class BookController extends Controller {
         }
     }
 
+    async onLoadMore() {
+        this.setState(() => {
+            this.data.loading = true;
+        });
+        try {
+            console.log('fethcing more books mlord')
+            console.log("welcome to page " + this.page)
+            let pageNumber = this.page + 1;
+            let items = await bookFetch(this.url, pageNumber);
+
+            this.page = pageNumber;
+    
+            this.setState(()=>{
+                this.data.list.concat(items['list'].reverse())
+                this.data.loading = false;
+                this.data.hasMore = items.length > 0;
+            });
+        } catch (e) {
+            showToast(`${e}\n${e.stack}`);
+            this.setState(()=>{
+                this.data.loading = false;
+            });
+        }
+        
+    }
+
     onFavoritePressed() {
         this.setState(()=>{
             if (this.isFavarite()) {
-                //FavoritesManager.remove(this.url);
+                FavoritesManager.remove(this.url);
             } else {
                 let last;
     
@@ -243,7 +272,7 @@ class BookController extends Controller {
     }
 
     isFavarite() {
-        //return FavoritesManager.exist(this.url);
+        return FavoritesManager.exist(this.url);
     }
 
     getLast() {
