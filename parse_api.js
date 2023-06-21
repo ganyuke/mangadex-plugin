@@ -2,8 +2,7 @@
 function parseMangaDexApi(apiJSON, language) {
     // Stop parsing JSON if MangaDex's API returns an error.
     if (apiJSON['result'] === 'error') {
-        console.log("we've enoucntered an error")
-        console.log(apiJSON['result'])
+        console.log("MangaDex API Error: ", apiJSON['errors'][0]['title'])
         return;
     }
 
@@ -12,9 +11,12 @@ function parseMangaDexApi(apiJSON, language) {
     let books = apiJSON['data'];
     
     for (let book of books) {
+        let translatedTtile = book['attributes']['title'][language];
+        let title = translatedTtile ? translatedTtile : Object.values(book['attributes']['title'])[0];
+    
         let item = {
             link: `https://api.mangadex.org/manga/${book['id']}`,
-            title: book['attributes']['title'][language],
+            title: title,
             picture: ''
         };
         for (let relation of book['relationships']) {

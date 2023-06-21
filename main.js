@@ -156,6 +156,7 @@ class MainController extends Controller {
 
         // Add a pretty header to the homepage.
         // TODO: Make localized.
+        // TODO: Stop it from triggering the reload.
         if (this.id === 'home') {
             results.push({
                 header: true,

@@ -23,9 +23,11 @@ function parseData(language, mangaJSON, chapterJSON) {
         return;
     }
 
-    let title = mangaJSON['data']['attributes']['title'][language]
+    let translatedTtile = mangaJSON['data']['attributes']['title'][language];
+    let title = translatedTtile ? translatedTtile : Object.values(mangaJSON['data']['attributes']['title'])[0];
+
     let subtitle = null;
-    let summary = null;;
+    let summary = null;
     let book = mangaJSON['data'];
 
     for (let altTitle of book['attributes']['altTitles']) {
@@ -43,10 +45,10 @@ function parseData(language, mangaJSON, chapterJSON) {
     let list = [];
     let chapters = chapterJSON['data'];
     for (let chapter of chapters) {
-        let volumeNum = chapter['attributes']['volume']
-        let chapterNum = chapter['attributes']['chapter']
-        let chapterTitle = chapter['attributes']['title']
-        let formattedTitle = (volumeNum ? "Vol. " + volumeNum : "") + (chapterNum ? " Ch. " + chapterNum : "") + (chapterTitle ? " - " + chapterTitle : "")
+        let volumeNum = chapter['attributes']['volume'];
+        let chapterNum = chapter['attributes']['chapter'];
+        let chapterTitle = chapter['attributes']['title'];
+        let formattedTitle = (volumeNum ? "Vol. " + volumeNum : "") + (chapterNum ? " Ch. " + chapterNum : "") + (chapterTitle ? " - " + chapterTitle : "");
 
         let scanlation_group;
         for (let relation of chapter['relationships']) {
