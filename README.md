@@ -9,7 +9,8 @@ A plugin to search content on MangaDex on [Kinoko](https://github.com/gsioteam/k
 - [x] Check if downloading actually works.
 - [x] Figure out why sliding left on the first page of a chapter goes to the next chapter instead of the previous.
     - Switched the API to fetch descending instead of ascending. But now I have to also fix loading all the chapters.
-- [ ] Load all chapters available, instead of the default 100 allowed by the API.
+- [x] Load all chapters available, instead of the default 100 allowed by the API.
+    - Paginated. TODO: Stop pinging the API twice for each additional page.
 - [x] Decide what to do with all those chapter subtitles.
     - Must credit scanlation groups.
 - [ ] Handle rate-limits for AtHome.

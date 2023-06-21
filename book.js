@@ -39,7 +39,7 @@ class BookController extends Controller {
             loading: false,
             editing: false,
             reverse: localStorage['reverse'] != 'false',
-            hasMore: false,
+            hasMore: true,
             list: []
         };
         this.selected = [];
@@ -111,17 +111,15 @@ class BookController extends Controller {
             this.data.loading = true;
         });
         try {
-            console.log('fethcing more books mlord')
-            console.log("welcome to page " + this.page)
             let pageNumber = this.page + 1;
             let items = await bookFetch(this.url, pageNumber);
 
             this.page = pageNumber;
     
             this.setState(()=>{
-                this.data.list.concat(items['list'].reverse())
+                this.data.list = items['list'].concat(this.data.list)
                 this.data.loading = false;
-                this.data.hasMore = items.length > 0;
+                this.data.hasMore = items['list'].length > 0;
             });
         } catch (e) {
             showToast(`${e}\n${e.stack}`);

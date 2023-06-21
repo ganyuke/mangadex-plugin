@@ -9,8 +9,6 @@ function parseMangaDexApi(apiJSON, language) {
 
     let results = [];
 
-    console.log("no error in api it seems")
-
     let books = apiJSON['data'];
     
     for (let book of books) {
@@ -34,10 +32,6 @@ function parseMangaDexApi(apiJSON, language) {
 
         results.push(item);
     }
-
-    console.log("THE RESUOTS ARE OUT OF THE OVEN")
-    console.log("Here you go!")
-    console.log(results)
 
     return results;
 }

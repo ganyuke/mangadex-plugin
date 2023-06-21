@@ -1,5 +1,10 @@
 <scaffold>
     <refresh onRefresh="onRefresh" loading="$loading">
+        <if candidate="$hasMore">
+        <attr:onLoadMore>
+            <callback function="onLoadMore"/>
+        </attr:onLoadMore>
+    </if>
         <slivers>
             <sliver-appbar expandedHeight="288"
                         color="white" 

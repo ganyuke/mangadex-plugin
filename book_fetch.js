@@ -80,7 +80,7 @@ module.exports = async function (url, pageNumber) {
     let rawMangaResponse = await fetch(url, { headers: headers });
     let mangaResponse = await rawMangaResponse.json();
 
-    let rawChapterResponse = await fetch(`${url}/feed?order[createdAt]=desc&order[volume]=desc&order[chapter]=desc&includes[]=scanlation_group&translatedLanguage[]=${getLanguage()}&offset=${pageNumber ? pageNumber * 10 : 0}&limit=10`, { headers: headers });
+    let rawChapterResponse = await fetch(`${url}/feed?order[createdAt]=desc&order[volume]=desc&order[chapter]=desc&includes[]=scanlation_group&translatedLanguage[]=${getLanguage()}&offset=${pageNumber ? pageNumber * 100 : 0}&limit=100`, { headers: headers });
     let chapterResponse = await rawChapterResponse.json();
 
     return parseData(getLanguage(), mangaResponse, chapterResponse);
